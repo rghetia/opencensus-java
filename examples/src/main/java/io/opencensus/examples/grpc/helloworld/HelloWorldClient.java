@@ -21,9 +21,13 @@ import static io.opencensus.examples.grpc.helloworld.HelloWorldUtils.getStringOr
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.MetadataUtils;
 import io.opencensus.common.Duration;
 import io.opencensus.common.Scope;
+import io.opencensus.common.ServerStats;
+import io.opencensus.common.ServerStatsEncoding;
 import io.opencensus.contrib.grpc.metrics.RpcViews;
 import io.opencensus.contrib.zpages.ZPageHandlers;
 import io.opencensus.exporter.stats.prometheus.PrometheusStatsCollector;
@@ -39,6 +43,7 @@ import io.opencensus.trace.Tracing;
 import io.opencensus.trace.samplers.Samplers;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,6 +55,24 @@ public class HelloWorldClient {
 
   private final ManagedChannel channel;
   private final GreeterGrpc.GreeterBlockingStub blockingStub;
+  AtomicReference<Metadata> trailersCapture = new AtomicReference<Metadata>();
+  AtomicReference<Metadata> headersCapture = new AtomicReference<Metadata>();
+  static final String CENSUS_SERVER_STATS_BIN = "census-server-stats-bin";
+  private static final Metadata.BinaryMarshaller<ServerStats> SERVER_STATS_BINARY_MARSHALLER =
+      new Metadata.BinaryMarshaller<ServerStats>() {
+        @Override
+        public byte[] toBytes(ServerStats serverStats) {
+          return ServerStatsEncoding.toBytes(serverStats);
+        }
+
+        @Override
+        public ServerStats parseBytes(byte[] serialized) {
+          return ServerStatsEncoding.parseBytes(serialized);
+        }
+      };
+
+  private static final Metadata.Key<ServerStats> SERVER_STATS_KEY =
+      Metadata.Key.of(CENSUS_SERVER_STATS_BIN, SERVER_STATS_BINARY_MARSHALLER);
 
   /** Construct client connecting to HelloWorld server at {@code host:port}. */
   public HelloWorldClient(String host, int port) {
@@ -64,7 +87,12 @@ public class HelloWorldClient {
   /** Construct client for accessing RouteGuide server using the existing channel. */
   HelloWorldClient(ManagedChannel channel) {
     this.channel = channel;
-    blockingStub = GreeterGrpc.newBlockingStub(channel);
+    blockingStub = MetadataUtils.captureMetadata(
+        GreeterGrpc.newBlockingStub(channel), headersCapture, trailersCapture);
+  }
+
+  private void printServerStatsTrailer() {
+
   }
 
   public void shutdown() throws InterruptedException {
@@ -83,6 +111,8 @@ public class HelloWorldClient {
       tracer.getCurrentSpan().addAnnotation("Saying Hello to Server.");
       response = blockingStub.sayHello(request);
       tracer.getCurrentSpan().addAnnotation("Received response from Server.");
+      ServerStats serverStats = trailersCapture.get().get(SERVER_STATS_KEY);
+      logger.log(Level.WARNING,"Received server stats: " + serverStats.toString());
     } catch (StatusRuntimeException e) {
       tracer
           .getCurrentSpan()

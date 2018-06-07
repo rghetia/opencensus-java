@@ -25,8 +25,11 @@ repositories {
 group = "io.opencensus"
 version = "0.15.0-SNAPSHOT" // CURRENT_OPENCENSUS_VERSION
 
-def opencensusVersion = "0.14.0" // LATEST_OPENCENSUS_RELEASE_VERSION
-def grpcVersion = "1.10.1" // CURRENT_GRPC_VERSION
+//def opencensusVersion = "0.14.0" // LATEST_OPENCENSUS_RELEASE_VERSION
+//def grpcVersion = "1.10.1" // CURRENT_GRPC_VERSION
+def grpcVersionGen = "1.10.1" // CURRENT_GRPC_VERSION
+def opencensusVersion = "0.15.0-SNAPSHOT" // LATEST_OPENCENSUS_RELEASE_VERSION
+def grpcVersion = "1.14.0-SNAPSHOT" // CURRENT_GRPC_VERSION
 def prometheusVersion = "0.3.0"
 
 tasks.withType(JavaCompile) {
@@ -58,7 +61,7 @@ protobuf {
     }
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersionGen}"
         }
     }
     generateProtoTasks {
