@@ -16,8 +16,6 @@
 
 package io.opencensus.common;
 
-import io.opencensus.common.ServerStats;
-import io.opencensus.common.ServerStatsFieldEnums;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -31,6 +29,7 @@ import java.nio.ByteOrder;
  * <p>Use {@code ServerStatsEncoding.parseBytes(byte[] serialized)} to decode.
  */
 public final class ServerStatsEncoding {
+
   /**
    * Encodes the {@code ServerStats} as per the Opencensus Summary Span specification.
    * TODO(rghetia): Add URL to Summary Span Spec.
@@ -60,29 +59,40 @@ public final class ServerStatsEncoding {
    * <p>TODO(rghetia): Add URL to Summary Span Spec.
    *
    * @param serialized encoded {@link ServerStats} in byte array.
-   * @return decoded {@code ServerStats}
+   * @return decoded {@code ServerStats}. null if decoding fails.
    */
   public static ServerStats parseBytes(byte[] serialized) {
     final ByteBuffer bb = ByteBuffer.wrap(serialized);
     bb.order(ByteOrder.LITTLE_ENDIAN);
-    ServerStats.Builder serverStatsBuilder = ServerStats.builder();
+    long serviceLatencyNs = 0L;
+    long lbLatencyNs = 0L;
+    byte traceOption = (byte) 0;
     while (bb.hasRemaining()) {
-      ServerStatsFieldEnums.Id id = ServerStatsFieldEnums.Id.valueOf((int) bb.get());
-      switch (id) {
-        case SERVER_STATS_LB_LATENCY_ID:
-          serverStatsBuilder.setLbLatencyNs(bb.getLong());
-          break;
-        case SERVER_STATS_SERVICE_LATENCY_ID:
-          serverStatsBuilder.setServiceLatencyNs(bb.getLong());
-          break;
-        case SERVER_STATS_TRACE_OPTION_ID:
-          serverStatsBuilder.setTraceOption(bb.get());
-          break;
-        default:
-          // Skip remaining
-          bb.position(bb.limit());
+      ServerStatsFieldEnums.Id id = ServerStatsFieldEnums.Id.valueOf((int) bb.get() & 0xFF);
+      if (id == null) {
+        // Skip remaining;
+        bb.position(bb.limit());
+      } else {
+        switch (id) {
+          case SERVER_STATS_LB_LATENCY_ID:
+            lbLatencyNs = bb.getLong();
+            break;
+          case SERVER_STATS_SERVICE_LATENCY_ID:
+            serviceLatencyNs = bb.getLong();
+            break;
+          case SERVER_STATS_TRACE_OPTION_ID:
+            traceOption = bb.get();
+            break;
+          default:
+            // Skip remaining
+            bb.position(bb.limit());
+        }
       }
     }
-    return serverStatsBuilder.build();
+    try {
+      return ServerStats.create(lbLatencyNs, serviceLatencyNs, traceOption);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 }

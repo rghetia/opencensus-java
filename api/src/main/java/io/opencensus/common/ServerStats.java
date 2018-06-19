@@ -27,14 +27,14 @@ public abstract class ServerStats {
   ServerStats() {}
 
   /**
-   * Returns the Load Balancer latency of lbLatencyNs.
+   * Returns the Load Balancer latency, a latency observed at Load Balancer.
    *
    * @return the Load Balancer latency in nanoseconds.
    */
   public abstract long lbLatencyNs();
 
   /**
-   * Returns the Service latency of serviceLatencyNs.
+   * Returns the Service latency, a latency observed at Server.
    *
    * @return the Service latency in nanoseconds.
    */
@@ -42,50 +42,31 @@ public abstract class ServerStats {
 
   public abstract byte traceOption();
 
-  public static Builder builder() {
-    return new AutoValue_ServerStats.Builder();
-  }
+  /**
+   * Creates new {@link ServerStats} from specified parameters.
+   *
+   * @param lbLatencyNs Represents request processing latency observed on Load Balancer. It is
+   *     measured in nanoseconds. Must not be less than 0.
+   * @param serviceLatencyNs Represents request processing latency observed on Server. It is
+   *     measured in nanoseconds. Must not be less than 0.
+   * @param traceOption Represents set of bits to indicate properties of trace. Currently it used
+   *     only the least signification bit to represent sampling of the request on the server side.
+   *     Other bits are ignored.
+   * @return new {@code ServerStats} with specified fields.
+   * @throws IllegalArgumentException if the arguments are out of range.
+   */
+  static ServerStats create(long lbLatencyNs, long serviceLatencyNs, byte traceOption)
+      throws IllegalArgumentException {
 
-  @AutoValue.Builder
-  public abstract static class Builder {
+    if (lbLatencyNs < 0) {
+      throw new IllegalArgumentException("'lbLatencyNs' is less than zero: " + lbLatencyNs);
+    }
 
-    /**
-     * Sets Load Balancer latency.
-     *
-     * @param value Represents request processing latency observed on Load Balancer. It is measured
-     *     in nanoseconds. Must not be less than 0.
-     * @return new {@code ServerStats.Builder} with specified fields.
-     * @throws IllegalArgumentException if the arguments are out of range.
-     */
-    public abstract Builder setLbLatencyNs(long value);
+    if (serviceLatencyNs < 0) {
+      throw new IllegalArgumentException(
+          "'serviceLatencyNs' is less than zero: " + serviceLatencyNs);
+    }
 
-    /**
-     * Sets Service latency.
-     *
-     * @param value Represents request processing latency observed on Server. It is measured in
-     *     nanoseconds. Must not be less than 0.
-     * @return new {@code ServerStats.Builder} with specified fields.
-     * @throws IllegalArgumentException if the arguments are out of range.
-     */
-    public abstract Builder setServiceLatencyNs(long value);
-
-    /**
-     * Sets Trace Option for the request.
-     *
-     * @param value Represents set of bits to indicate properties of trace. Currently it used only
-     *     the least signification bit to represent sampling of the request on the server side.
-     *     Other bits are ignored.
-     * @return new {@code ServerStats} with specified fields.
-     * @throws IllegalArgumentException if the arguments are out of range.
-     */
-    public abstract Builder setTraceOption(byte value);
-
-    /**
-     * Creates a new {@code ServerStats} from parameters specified using the Builder.
-     *
-     * @return new {@code ServerStats} built from parameters set using the Builder.
-     * @throws IllegalArgumentException if the arguments are out of range.
-     */
-    public abstract ServerStats build();
+    return new AutoValue_ServerStats(lbLatencyNs, serviceLatencyNs, traceOption);
   }
 }

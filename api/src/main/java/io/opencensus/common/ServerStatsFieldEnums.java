@@ -24,6 +24,7 @@ import java.util.TreeMap;
  * <p>TODO (rghetia): put url here
  */
 public class ServerStatsFieldEnums {
+
   public enum Id {
     SERVER_STATS_LB_LATENCY_ID(0),
     SERVER_STATS_SERVICE_LATENCY_ID(1),
