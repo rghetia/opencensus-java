@@ -159,3 +159,26 @@ $ ./target/appassembler/bin/StackdriverQuickstart
 ```
 $ ./bazel-bin/StackdriverQuickstart
 ```
+
+## To run "Jetty HTTP Example" use
+
+Client generates request every 15 seconds to the Server. Traces can be observed in the logs for
+both the Client and the Server.
+
+The Client and the Server application exports trace to Logger and Jaeger. They exports stats to Prometheus.
+
+* host and serverPort is "localhost:8080"
+* Prometheus port for scraping stats is 9090 for server and 9091 for client.
+
+
+### Gradle
+```
+$ ./build/install/opencensus-examples/bin/HttpJettyServer
+$ ./build/install/opencensus-examples/bin/HttpJettyClient
+```
+
+### Maven
+```
+$ ./target/appassembler/bin/HttpJettyServer
+$ ./target/appassembler/bin/HttpJettyClient
+```
