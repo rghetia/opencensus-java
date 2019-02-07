@@ -68,7 +68,16 @@ public class HelloWorldClient {
     initTracing();
     initStatsExporter();
 
-    OcJettyHttpClient httpClient = new OcJettyHttpClient();
+    // Create http client that will trace requests using default propagator and extractor.
+    // Alternatively, use
+    //  OcJettyHttpClient httpClient =
+    //     new OcJettyHttpClient(null, Tracing.getPropagationComponent().getB3Format());
+    //  OR
+    //  OcJettyHttpClient httpClient =
+    //     new OcJettyHttpClient(customExtractor, Tracing.getPropagationComponent().getB3Format());
+    // OcJettyHttpClient httpClient = new OcJettyHttpClient();
+    OcJettyHttpClient httpClient =
+        new OcJettyHttpClient(null, Tracing.getPropagationComponent().getB3Format());
 
     httpClient.start();
 
