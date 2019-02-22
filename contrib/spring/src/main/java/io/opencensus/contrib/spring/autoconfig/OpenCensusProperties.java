@@ -16,6 +16,7 @@
 
 package io.opencensus.contrib.spring.autoconfig;
 
+import io.opencensus.trace.propagation.TextFormat;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -27,6 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class OpenCensusProperties {
 
   private boolean enabled = true;
+  private Tracing tracing = new Tracing();
 
   public boolean isEnabled() {
     return this.enabled;
@@ -34,5 +36,35 @@ public class OpenCensusProperties {
 
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public Tracing getTracing() {
+    return tracing;
+  }
+
+  public void setTracing(Tracing tracing) {
+    this.tracing = tracing;
+  }
+
+  static class Tracing {
+    private TextFormat propagator =
+        io.opencensus.trace.Tracing.getPropagationComponent().getTraceContextFormat();
+    private Boolean publicEndpoint = true;
+
+    public TextFormat getPropagator() {
+      return propagator;
+    }
+
+    public void setPropagator(TextFormat propagator) {
+      this.propagator = propagator;
+    }
+
+    public Boolean getPublicEndpoint() {
+      return publicEndpoint;
+    }
+
+    public void setPublicEndpoint(Boolean publicEndpoint) {
+      this.publicEndpoint = publicEndpoint;
+    }
   }
 }
